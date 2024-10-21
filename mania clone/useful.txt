@@ -1,0 +1,10 @@
+https://github.com/dotnet/pinvoke/blob/main/src/Kernel32/storebanned/Kernel32.cs
+https://learn.microsoft.com/en-us/windows/console/console-reference
+https://blog.tedd.no/2015/08/02/better-text-console-for-c/
+https://www.benryves.com/tutorials/winconsole/2
+
+
+https://www.pinvoke.net/default.aspx/kernel32/ConsoleFunctions.html
+
+
+magic string: $"\x1b[48;2;{r};{g};{b}m "

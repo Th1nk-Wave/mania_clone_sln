@@ -1,0 +1,65 @@
+/*
+
+using System.Drawing;
+
+namespace mania_clone.Graphics
+{
+	public class Window
+	{
+		private int _Width;
+		private int _Height;
+		private Byte[100*100*3] PixelBuffer;
+
+		public int Width { 
+			get { return _Width; }
+			set { _Width = value; }
+		}
+
+		public int Height { 
+			get { return _Height; }
+			set { _Height = value; }
+		}
+
+
+		public Window(int Width, int Height)
+		{
+			_Width = Width;
+			_Height = Height;
+		}
+
+		private static int GetIndexFromCoordinates(int x, int y)
+		{
+			return (x + (y * _Width))*3;
+		}
+		
+		private static Tuple<int,int> GetCoordinatesFromIndex(int index)
+		{
+			return ((index / _Width*3) , (index % _Width*3));
+		}
+
+		private void SetPixelInBuffer(int x, int y, Byte r, Byte g, Byte b)
+		{
+			PixelBuffer[GetIndexFromCoordinates(x, y) + 0] = r;
+			PixelBuffer[GetIndexFromCoordinates(x, y) + 1] = g;
+			PixelBuffer[GetIndexFromCoordinates(x, y) + 2] = b;
+        }
+
+		public void PrintToScreen()
+		{
+			Color.FromArgb();
+			int lastY = 0;
+			Console.CursorLeft = 0;
+			Console.CursorTop = 0;
+			for (int ArrPos = 0; ArrPos < PixelBuffer.Length; ArrPos++)
+			{
+				Tuple<int, int> position = GetCoordinatesFromIndex(ArrPos);
+				if (position.Item2 != lastY) {Console.CursorTop = position.Item2; Console.CursorLeft = 0}
+				Console.BackgroundColor
+
+
+				lastY = position.Item2;
+			}
+		}
+	}
+}
+*/
