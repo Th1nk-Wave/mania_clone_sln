@@ -4,6 +4,7 @@ using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
 using static ConsoleAPI.ConsoleAPI;
+using Graphics;
 
 
 
@@ -18,6 +19,14 @@ namespace mania_clone
         [STAThread]
         private static int Main(string[] args)
         {
+
+            Window w = new Window(100,100);
+
+
+
+
+
+            return 0;
             IntPtr buffer1 = CreateConsoleScreenBuffer(
                 GENERIC_READ | GENERIC_WRITE,
                 FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -37,7 +46,7 @@ namespace mania_clone
 
             hStdout1 = GetStdHandle(STD_OUTPUT_HANDLE);
             SetVirtual(hStdout1);
-            SetCurrentFont(hStdout1, "Consolas", 10);
+            SetCurrentFont(hStdout1, "Consolas", 1);
 
             int sizeX = Console.WindowWidth;
             int sizeY = Console.WindowHeight;
