@@ -17,6 +17,8 @@ namespace ConsoleAPI
         public const Int32 INVALID_HANDLE_VALUE = -1;
         public const int FixedWidthTrueType = 54;
         public const int StandardOutputHandle = -11;
+        public const uint SWP_NOSIZE = 0x0001;
+        public const uint SWP_NOZORDER = 0x0004;
 
         // enums
         [Flags]
@@ -194,6 +196,30 @@ namespace ConsoleAPI
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern bool GetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool MaximumWindow, ref FontInfo ConsoleCurrentFontEx);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetConsoleWindowInfo(
+            IntPtr hConsoleOutput,
+            bool bAbsolute,
+            [In] ref SMALL_RECT lpConsoleWindow
+        );
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern COORD GetLargestConsoleWindowSize(
+            IntPtr hConsoleOutput
+        );
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr GetConsoleWindow();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetConsoleScreenBufferSize(
+            IntPtr hConsoleOutput,
+            COORD dwSize
+        );
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, UInt32 uFlags);
+
         public static void cls(IntPtr hConsole)
         {
             COORD coordScreen = new COORD(0,0);    // home for the cursor
@@ -288,6 +314,26 @@ namespace ConsoleAPI
                 Console.WriteLine("Get error " + er);
                 throw new System.ComponentModel.Win32Exception(er);
             }
+        }
+        public static void SetWindowSize(IntPtr hConsole,UInt16 Width, UInt16 Height)
+        {
+            COORD MaxSize = GetLargestConsoleWindowSize(hConsole);
+            SetConsoleScreenBufferSize(hConsole, MaxSize);
+            
+            SMALL_RECT size = new SMALL_RECT();
+            size.Left = 1;//-20;
+            size.Top = 1;//-20;
+            size.Right = (Int16)(MaxSize.X - 1);
+            size.Bottom = (Int16)(MaxSize.Y - 1);
+            SetConsoleWindowInfo(hConsole, true, ref size);
+
+            IntPtr Wnd = GetConsoleWindow();
+            SetWindowPos(Wnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+            
+
+            //Console.WriteLine($"{MaxSize.X}, {MaxSize.Y}");
+            
         }
     }
 }

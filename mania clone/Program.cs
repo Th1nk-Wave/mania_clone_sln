@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32.SafeHandles;
-using System.Drawing;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -19,8 +18,35 @@ namespace mania_clone
         [STAThread]
         private static int Main(string[] args)
         {
+            ushort width = 1920 / 2;
+            ushort height = 1080 / 2;
+            Window w = new Window(width,height, (Int16)2);
+            Color red = new Color(255, 0, 0);
+            Color blue = new Color(0, 0, 255);
+            w.Fill(blue);
+            w.SetPixel(0, 0, red);
+            w.SetPixel(10,10,red);
+            w.Update();
+            w.Render();
 
-            Window w = new Window(100,100);
+
+            Random rnd = new Random();
+            while (true)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    ushort x = (ushort)rnd.Next(0, width);
+                    ushort y = (ushort)rnd.Next(0, height);
+                    w.SetPixel(x, y, red);
+                    w.Update();
+                    w.Render();
+                }
+                
+                Thread.Sleep(10);
+            }
+            
+
+            
 
 
 
