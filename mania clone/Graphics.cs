@@ -254,6 +254,7 @@ namespace Graphics
         {
 
             StringBuilder renderSTR = new StringBuilder(UpdateComplexity + renderer_FinalSuffixEscapeSequenceOffset);
+            UpdateComplexity = 0;
             do
             {
                 UInt16 updateRow = UpdateStack.Pop();
