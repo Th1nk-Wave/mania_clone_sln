@@ -2,7 +2,7 @@ import cv2
 import math
 import time
 
-unique_colors = 8
+unique_colors = 9
 
 def downscale_and_extract_rgb(input_video_path, output_frame_size=(64, 48)):
     # Open the video file
@@ -47,7 +47,7 @@ def downscale_and_extract_rgb(input_video_path, output_frame_size=(64, 48)):
             print(f"Processed frame {current_frame + 1}/{frame_count}")
             start = time.perf_counter()
         current_frame += 1
-    with open("frameData.txt","w") as f:
+    with open("frameDataBig.txt","w") as f:
         f.write(outputSTR)
     # Release the video capture object
     cap.release()
@@ -55,6 +55,6 @@ def downscale_and_extract_rgb(input_video_path, output_frame_size=(64, 48)):
 
 # Usage example:
 input_video = 'bad_apple.mp4'
-res = 15
+res = 32
 output_size = (8*res, 6*res)  # Example output size, you can change this
 downscale_and_extract_rgb(input_video, output_size)

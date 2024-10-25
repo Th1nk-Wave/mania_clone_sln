@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Graphics;
+using static Utility.Utils;
 
 namespace mania_clone
 {
@@ -35,6 +36,29 @@ namespace mania_clone
                 }
                 
                 AllFrames.Add(SanitisedFrame);
+            }
+            return AllFrames;
+        }
+        public static List<UInt32[]> GetRawFramesCompressed(string FilePath, UInt16 FrameWidth, UInt16 FrameHeight, UInt64 totalFrames)
+        {
+            List<UInt32[]> AllFrames = new List<uint[]>();
+            FileStream stream = new FileStream(FilePath,FileMode.Open);
+            BinaryReader reader = new BinaryReader(stream);
+
+            UInt32[] frame = new UInt32[FrameWidth * FrameHeight];
+            UInt32[] gigachunk = new UInt32[(UInt64)FrameWidth * (UInt64)FrameHeight * totalFrames + 10];
+
+            UInt64 indexInFrame = 0;
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
+            {
+                byte color = reader.ReadByte();
+                UInt16 repeated = reader.ReadUInt16();
+                
+
+                UInt32[] colorSegment = new UInt32[repeated]; Populate(colorSegment, new Color(color, color, color).ToUint32());
+                colorSegment.CopyTo(gigachunk, (int)indexInFrame);
+                indexInFrame += repeated;
+                Console.WriteLine($"proccessed: {indexInFrame} indexes");
             }
             return AllFrames;
         }

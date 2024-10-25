@@ -20,15 +20,18 @@ namespace mania_clone
         [STAThread]
         private static int Main(string[] args)
         {
+            int totalFrames = 6570;
             ushort res = 15;
-            Window w = new Graphics.Window((ushort)(8 * res), (ushort)(6*res),4);
+            Window w = new Window((ushort)(8 * res), (ushort)(6*res),2);
 
-            List<UInt32[]> frames = GetRawFrames("D:/stuff thats in better drive/programming/c# programming/mania_clone_sln/mania clone/assests/frameData.txt");
+            List<UInt32[]> frames = GetRawFrames("H:/programming/personal projects/mania clone/mania_clone_sln/mania clone/assests/FrameData.txt");
+            //GetRawFramesCompressed("H:/programming/personal projects/mania clone/mania_clone_sln/mania clone/assests/FrameDataCompressed.txt", (ushort)(8 * res), (ushort)(6 * res), 6570);
+            //
 
             DateTime startTime, endTime;
             startTime = DateTime.Now;
 
-            int totalFrames = 6570;
+            
             int duration = (totalFrames * 1 / 30)*1000;
 
             int lastFrame = 0;
@@ -44,6 +47,10 @@ namespace mania_clone
                     w.Update_optimise();
                     w.Render_optimise();
                     lastFrame = newFrame;
+                }
+                if (newFrame >= totalFrames)
+                {
+                    startTime = endTime;
                 }
 
             }
