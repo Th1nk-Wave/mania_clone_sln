@@ -1,7 +1,7 @@
 # THIS IS DREADFULLY INCOMPLETE
 
-# mania_clone_sln
-
+# example stress test of grphics system using bad apple
+https://youtu.be/X7QiqgbAXoI
 
 # this code is very messy and half baked
 so dont copy anything yet
