@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using static ConsoleAPI.ConsoleAPI;
 using Graphics;
+using static mania_clone.fileDecoder;
+using System.Diagnostics;
 
 
 
@@ -18,32 +20,35 @@ namespace mania_clone
         [STAThread]
         private static int Main(string[] args)
         {
-            ushort width = 1920 / 2;
-            ushort height = 1080 / 2;
-            Window w = new Window(width,height, (Int16)2);
-            Color red = new Color(255, 0, 0);
-            Color blue = new Color(0, 0, 255);
-            w.Fill(blue);
-            w.SetPixel(0, 0, red);
-            w.SetPixel(10,10,red);
-            w.Update();
-            w.Render();
+            ushort res = 15;
+            Window w = new Graphics.Window((ushort)(8 * res), (ushort)(6*res),4);
 
+            List<UInt32[]> frames = GetRawFrames("D:/stuff thats in better drive/programming/c# programming/mania_clone_sln/mania clone/assests/frameData.txt");
 
-            Random rnd = new Random();
+            DateTime startTime, endTime;
+            startTime = DateTime.Now;
+
+            int totalFrames = 6570;
+            int duration = (totalFrames * 1 / 30)*1000;
+
+            int lastFrame = 0;
             while (true)
             {
-                for (int i = 0; i < 10; i++)
+                endTime = DateTime.Now;
+                Double elapsedMillisecs = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
+
+                int newFrame = (int)((elapsedMillisecs / duration) * totalFrames);
+                if (newFrame != lastFrame)
                 {
-                    ushort x = (ushort)rnd.Next(0, width);
-                    ushort y = (ushort)rnd.Next(0, height);
-                    w.SetPixel(x, y, red);
-                    w.Update();
-                    w.Render();
+                    w.FillWith(frames[newFrame]);
+                    w.Update_optimise();
+                    w.Render_optimise();
+                    lastFrame = newFrame;
                 }
-                
-                Thread.Sleep(10);
+
             }
+
+
             
 
             

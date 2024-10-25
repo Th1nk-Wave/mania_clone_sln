@@ -35,6 +35,8 @@ namespace Graphics
         private Boolean[] LineUpdates;
         private Boolean[] NeedRender;
         private string[] RenderStrings;
+        private int UpdateComplexity;
+        private Stack<UInt16> UpdateStack;
 
         private UInt16 _Width = 100;
         private UInt16 _Height = 100;
@@ -62,9 +64,11 @@ namespace Graphics
             ColorBuffer = new UInt32[Width * Height]; Populate(ColorBuffer, 0u);
             CharColorBuffer = new UInt32[Width * Height * 2]; Populate(CharColorBuffer, 0u);
             CharBuffer = new char[Width * Height * 2]; Populate(CharBuffer, ' ');
-            LineUpdates = new Boolean[Height]; Populate(LineUpdates, true);
-            NeedRender = new Boolean[Height]; Populate(NeedRender, true);
+            LineUpdates = new Boolean[Height]; Populate(LineUpdates, false);
+            NeedRender = new Boolean[Height]; Populate(NeedRender, false);
             RenderStrings = new string[Height]; Populate(RenderStrings, "render string not calculated for this line");
+            UpdateComplexity = 0;
+            UpdateStack = new Stack<UInt16>(Height);
 
             //get std handle
             Hwindow = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -99,7 +103,6 @@ namespace Graphics
         {
             ColorBuffer[x + y*_Width] = col.ToUint32();
             LineUpdates[y] = true;
-            NeedRender[y] = true;
         }
         public Color GetPixel(UInt16 x, UInt16 y)
         {
@@ -109,6 +112,13 @@ namespace Graphics
         public void Fill(Color col)
         {
             Populate(ColorBuffer,col.ToUint32());
+            Populate(LineUpdates,true);
+        }
+
+        public void FillWith(UInt32[] frame)
+        {
+            frame.CopyTo(ColorBuffer,0);
+            Populate(LineUpdates, true);
         }
 
         public void Update()
@@ -160,22 +170,100 @@ namespace Graphics
                 }
                 RenderStrings[ypos] = lineString;
                 LineUpdates[ypos] = false;
+                NeedRender[ypos] = true;
 
 
             }
         }
 
+        private int renderer_PerLineEscapeSequenceOffset = "\x1b[;0H".Length + (int)Math.Floor(Math.Log10(1 + (int)UInt16.MaxValue));
+        public void Update_optimise()
+        {
+            for (UInt16 ypos = 0; ypos < _Height; ypos++)
+            {
+                UInt32 oldrgb = UInt32.MaxValue;
+                if (!LineUpdates[ypos]) { continue; }
+
+                string lineSTR = "";
+                UInt16 blankCount = 0;
+
+                for (UInt16 xpos = 0; xpos < _Width; xpos++)
+                {
+                    UInt32 rgb = ColorBuffer[xpos + ypos * _Width];
+                    if (rgb == oldrgb)
+                    {
+                        blankCount += 1;
+                    }
+                    else
+                    {
+                        if (blankCount > 0)
+                        {
+                            //lineSTR += new string(' ', blankCount * 2);
+                            lineSTR += new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount).ToString();
+                            blankCount = 0;
+                        }
+
+                        lineSTR += $"\x1b[48;2;{(byte)(rgb >> 8)};{(byte)(rgb >> 16)};{(byte)(rgb >> 24)}m  ";
+                    }
+                    oldrgb = rgb;
+                }
+                if (blankCount > 0)
+                {
+                    //lineSTR += new string(' ', blankCount * 2);
+                    lineSTR += new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount).ToString();
+                    blankCount = 0;
+                }
+
+                if (NeedRender[ypos])
+                {
+                    UpdateComplexity -= RenderStrings[ypos].Length;
+                    UpdateComplexity += lineSTR.Length;
+                } else
+                {
+                    UpdateComplexity += lineSTR.Length + renderer_PerLineEscapeSequenceOffset;
+                    UpdateStack.Push(ypos);
+                }
+
+                RenderStrings[ypos] = lineSTR;
+                LineUpdates[ypos] = false;
+                NeedRender[ypos] = true;
+            }
+        }
+
         public void Render()
         {
+            string renderSTR = "";
             for (UInt16 ypos = 0; ypos < _Height; ypos++)
             {
                 if (NeedRender[ypos])
                 {
-                    Console.Write($"\x1b[{ypos + 1};0H{RenderStrings[ypos]}");
+                    //Console.Write($"\x1b[{ypos + 1};0H{RenderStrings[ypos]}");
+                    renderSTR += $"\x1b[{ypos + 1};0H{RenderStrings[ypos]}";
                     NeedRender[ypos] = false;
                 }
             }
-            Console.Write($"\x1b[{_Height + 1};0H");
+            //Console.Write($"\x1b[{_Height + 1};0H");
+            renderSTR += $"\x1b[{_Height + 1};0H";
+            uint charsWritten = 0;
+            nint reserved = 0;
+            //WriteConsoleOutputCharacter(Hwindow, renderSTR, (uint)renderSTR.Length, new COORD(0, 0), out charsWritten);
+            WriteConsole(Hwindow, renderSTR, (uint)renderSTR.Length, out charsWritten, reserved);
+        }
+        private int renderer_FinalSuffixEscapeSequenceOffset = "\x1b[;0H".Length + (int)Math.Floor(Math.Log10(1 + (int)UInt16.MaxValue));
+        public void Render_optimise()
+        {
+
+            StringBuilder renderSTR = new StringBuilder(UpdateComplexity + renderer_FinalSuffixEscapeSequenceOffset);
+            do
+            {
+                UInt16 updateRow = UpdateStack.Pop();
+                renderSTR.Append($"\x1b[{updateRow + 1};0H{RenderStrings[updateRow]}");
+                NeedRender[updateRow] = false;
+            } while (UpdateStack.Count > 0);
+            renderSTR.Append($"\x1b[{_Height + 1};0H");
+            uint charsWritten = 0;
+            nint reserved = 0;
+            WriteConsole(Hwindow, renderSTR.ToString(), (uint)renderSTR.Length, out charsWritten, reserved);
         }
     }
 }

@@ -147,13 +147,13 @@ namespace ConsoleAPI
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetConsoleScreenBufferInfo(
+        public static extern bool GetConsoleScreenBufferInfo(
             IntPtr hConsoleOutput,
             ref CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenBufferInfo
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FillConsoleOutputCharacter(
+        public static extern bool FillConsoleOutputCharacter(
             IntPtr hConsoleOutput,
             char cCharacter,
             uint nLength,
@@ -162,7 +162,7 @@ namespace ConsoleAPI
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FillConsoleOutputAttribute(
+        public static extern bool FillConsoleOutputAttribute(
             IntPtr hConsoleOutput,
             ushort wAttribute,
             uint nLength,
@@ -171,54 +171,72 @@ namespace ConsoleAPI
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleCursorPosition(
+        public static extern bool SetConsoleCursorPosition(
             IntPtr hConsoleOutput,
             COORD dwCursorPosition
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleMode(
+        public static extern bool SetConsoleMode(
             IntPtr hConsoleHandle,
             uint dwMode
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetConsoleMode(
+        public static extern bool GetConsoleMode(
             IntPtr hConsoleHandle,
             out uint lpMode
         );
 
         [return: MarshalAs(UnmanagedType.Bool)]
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern bool SetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool MaximumWindow, ref FontInfo ConsoleCurrentFontEx);
+        public static extern bool SetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool MaximumWindow, ref FontInfo ConsoleCurrentFontEx);
 
         [return: MarshalAs(UnmanagedType.Bool)]
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern bool GetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool MaximumWindow, ref FontInfo ConsoleCurrentFontEx);
+        public static extern bool GetCurrentConsoleFontEx(IntPtr hConsoleOutput, bool MaximumWindow, ref FontInfo ConsoleCurrentFontEx);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleWindowInfo(
+        public static extern bool SetConsoleWindowInfo(
             IntPtr hConsoleOutput,
             bool bAbsolute,
             [In] ref SMALL_RECT lpConsoleWindow
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern COORD GetLargestConsoleWindowSize(
+        public static extern COORD GetLargestConsoleWindowSize(
             IntPtr hConsoleOutput
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr GetConsoleWindow();
+        public static extern IntPtr GetConsoleWindow();
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleScreenBufferSize(
+        public static extern bool SetConsoleScreenBufferSize(
             IntPtr hConsoleOutput,
             COORD dwSize
         );
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool WriteConsoleOutputCharacter(
+            IntPtr hConsoleOutput,
+            string lpCharacter,
+            uint nLength,
+            COORD dwWriteCoord,
+            out uint lpNumberOfCharsWritten
+        );
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool WriteConsole(
+            IntPtr hConsoleOutput,
+            string lpBuffer,
+            uint nNumberOfCharsToWrite,
+            out uint lpNumberOfCharsWritten,
+            IntPtr lpReserved
+        );
+
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, UInt32 uFlags);
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, UInt32 uFlags);
 
         public static void cls(IntPtr hConsole)
         {
