@@ -1,3 +1,5 @@
+# THIS IS DREADFULLY INCOMPLETE
+
 # mania_clone_sln
 
 
