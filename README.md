@@ -9,7 +9,7 @@ so dont copy anything yet
 # how to run it:
 - run the python script at assets/converter_compress.py, this will take around half an hour (its python what did you expect)
 - if you want to change the resolution of the video so it takes less time to convert then change the "res" value in BOTH the converter_compress.py AND program.cs (the highest it can go is 64)
-- inside program.cs change the filepath to the file path of the outputted fileDataCompressed.txt file in assest/
+- inside program.cs change the filepath to the file path of the outputted fileDataCompressed.txt file in assets/
 - run the project
 
 # TODO:
