@@ -10,57 +10,49 @@ namespace mania_clone
 {
     public static class fileDecoder
     {
-        public static List<UInt32[]> GetRawFrames(string FilePath)
+        public static List<UInt32[]> UnpackFrames(string filePath, int frameWidth, int frameHeight)
         {
-            List<UInt32[]> AllFrames = new List<uint[]>();
-            StreamReader reader = new StreamReader(FilePath,Encoding.ASCII);
-            
-            
-            string[] frames = reader.ReadToEnd().Split('|');
-            int frameIndex = -1;
-            foreach (string frame in frames)
+            List<UInt32[]> AllFrames = new List<UInt32[]>();
+
+            using (BinaryReader reader = new BinaryReader(File.Open(filePath, FileMode.Open)))
             {
-                frameIndex++;
-                UInt32[] SanitisedFrame = new UInt32[frame.Replace("#","").Length];
-                int y = -1;
-                foreach (string Line in frame.Split('#'))
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
                 {
-                    y++;
-                    for (int x = 0;  x < Line.Length; x++)
+                    // Create buffer for current frame
+                    UInt32[] frameBuffer = new UInt32[frameWidth * frameHeight];
+                    int pixelIndex = 0;
+
+                    while (pixelIndex < frameBuffer.Length)
                     {
-                        char num = Line[x];
-                        
-                        int value = int.Parse(num.ToString()) * 255 / 8;
-                        SanitisedFrame[x + y*Line.Length] = new Color((byte)Math.Min(value,255), (byte)Math.Min(value, 255), (byte)Math.Min(value, 255)).ToUint32();
+                        // Read repeated count (4 bytes)
+                        int repeatedCount = reader.ReadInt32();
+
+
+                        // Read RGB values (3 bytes)
+                        byte r = reader.ReadByte();
+                        byte g = reader.ReadByte();
+                        byte b = reader.ReadByte();
+
+                        UInt32 packedColor = new Color(r, g, b).ToUint32();
+
+                        // Fill frame buffer with repeated colors
+                        for (int i = 0; i < repeatedCount; i++)
+                        {
+                            if (pixelIndex < frameBuffer.Length)
+                            {
+                                frameBuffer[pixelIndex] = packedColor;
+                                pixelIndex++;
+                            }
+                        }
                     }
+
+                    // Add unpacked frame list
+                    AllFrames.Add(frameBuffer);
                 }
-                
-                AllFrames.Add(SanitisedFrame);
             }
+
             return AllFrames;
-        }
-        public static List<UInt32[]> GetRawFramesCompressed(string FilePath, UInt16 FrameWidth, UInt16 FrameHeight, UInt64 totalFrames)
-        {
-            List<UInt32[]> AllFrames = new List<uint[]>();
-            FileStream stream = new FileStream(FilePath,FileMode.Open);
-            BinaryReader reader = new BinaryReader(stream);
 
-            UInt32[] frame = new UInt32[FrameWidth * FrameHeight];
-            UInt32[] gigachunk = new UInt32[(UInt64)FrameWidth * (UInt64)FrameHeight * totalFrames + 10];
-
-            UInt64 indexInFrame = 0;
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                byte color = reader.ReadByte();
-                UInt16 repeated = reader.ReadUInt16();
-                
-
-                UInt32[] colorSegment = new UInt32[repeated]; Populate(colorSegment, new Color(color, color, color).ToUint32());
-                colorSegment.CopyTo(gigachunk, (int)indexInFrame);
-                indexInFrame += repeated;
-                Console.WriteLine($"proccessed: {indexInFrame} indexes");
-            }
-            return AllFrames;
         }
     }
 }

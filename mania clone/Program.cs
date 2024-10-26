@@ -21,15 +21,13 @@ namespace mania_clone
         private static int Main(string[] args)
         {
             int totalFrames = 6570;
-            ushort res = 15;
+            ushort res = 30;
             Window w = new Window((ushort)(8 * res), (ushort)(6*res),2);
 
-            List<UInt32[]> frames = GetRawFrames("H:/programming/personal projects/mania clone/mania_clone_sln/mania clone/assests/FrameData.txt");
-            //GetRawFramesCompressed("H:/programming/personal projects/mania clone/mania_clone_sln/mania clone/assests/FrameDataCompressed.txt", (ushort)(8 * res), (ushort)(6 * res), 6570);
-            //
-
+            List<UInt32[]> frames = UnpackFrames("D:/stuff thats in better drive/programming/c# programming/mania_clone_sln/mania clone/assets/frameDataCompressed.txt", (ushort)(8 * res), (ushort)(6 * res));
+            List<string> baked = w.BakeFramesFixed(frames, (ushort)(8 * res), (ushort)(6 * res),0,0);
             DateTime startTime, endTime;
-            startTime = DateTime.Now;
+            startTime = DateTime.UtcNow;
 
             
             int duration = (totalFrames * 1 / 30)*1000;
@@ -37,21 +35,25 @@ namespace mania_clone
             int lastFrame = 0;
             while (true)
             {
-                endTime = DateTime.Now;
+                endTime = DateTime.UtcNow;
                 Double elapsedMillisecs = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
+
+                if (elapsedMillisecs >= duration)
+                {
+                    startTime = endTime;
+                    elapsedMillisecs = 0;
+                }
 
                 int newFrame = (int)((elapsedMillisecs / duration) * totalFrames);
                 if (newFrame != lastFrame)
                 {
-                    w.FillWith(frames[newFrame]);
-                    w.Update_optimise();
-                    w.Render_optimise();
+                    //w.FillWith(frames[newFrame]);
+                    //w.Update_optimise2();
+                    //w.Render_optimise();
+                    w.RenderFixedBakedFrame(baked[newFrame]);
                     lastFrame = newFrame;
                 }
-                if (newFrame >= totalFrames)
-                {
-                    startTime = endTime;
-                }
+                
 
             }
 

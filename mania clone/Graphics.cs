@@ -230,6 +230,60 @@ namespace Graphics
             }
         }
 
+        public void Update_optimise2()
+        {
+            for (UInt16 ypos = 0; ypos < _Height; ypos++)
+            {
+                UInt32 oldrgb = UInt32.MaxValue;
+                if (!LineUpdates[ypos]) { continue; }
+
+                StringBuilder lineSTR = new StringBuilder(_Width * 2 + 500);
+                UInt16 blankCount = 0;
+
+                for (UInt16 xpos = 0; xpos < _Width; xpos++)
+                {
+                    UInt32 rgb = ColorBuffer[xpos + ypos * _Width];
+                    if (rgb == oldrgb)
+                    {
+                        blankCount += 1;
+                    }
+                    else
+                    {
+                        if (blankCount > 0)
+                        {
+                            //lineSTR += new string(' ', blankCount * 2);
+                            lineSTR.Append( new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                            blankCount = 0;
+                        }
+
+                        lineSTR.Append($"\x1b[48;2;{(byte)(rgb >> 8)};{(byte)(rgb >> 16)};{(byte)(rgb >> 24)}m  ");
+                    }
+                    oldrgb = rgb;
+                }
+                if (blankCount > 0)
+                {
+                    //lineSTR += new string(' ', blankCount * 2);
+                    lineSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                    blankCount = 0;
+                }
+
+                if (NeedRender[ypos])
+                {
+                    UpdateComplexity -= RenderStrings[ypos].Length;
+                    UpdateComplexity += lineSTR.Length;
+                }
+                else
+                {
+                    UpdateComplexity += lineSTR.Length + renderer_PerLineEscapeSequenceOffset;
+                    UpdateStack.Push(ypos);
+                }
+
+                RenderStrings[ypos] = lineSTR.ToString();
+                LineUpdates[ypos] = false;
+                NeedRender[ypos] = true;
+            }
+        }
+
         public void Render()
         {
             string renderSTR = "";
@@ -246,7 +300,6 @@ namespace Graphics
             renderSTR += $"\x1b[{_Height + 1};0H";
             uint charsWritten = 0;
             nint reserved = 0;
-            //WriteConsoleOutputCharacter(Hwindow, renderSTR, (uint)renderSTR.Length, new COORD(0, 0), out charsWritten);
             WriteConsole(Hwindow, renderSTR, (uint)renderSTR.Length, out charsWritten, reserved);
         }
         private int renderer_FinalSuffixEscapeSequenceOffset = "\x1b[;0H".Length + (int)Math.Floor(Math.Log10(1 + (int)UInt16.MaxValue));
@@ -265,6 +318,59 @@ namespace Graphics
             uint charsWritten = 0;
             nint reserved = 0;
             WriteConsole(Hwindow, renderSTR.ToString(), (uint)renderSTR.Length, out charsWritten, reserved);
+        }
+
+        public List<string> BakeFramesFixed(List<UInt32[]> frames, UInt16 frameWidth, UInt16 frameHeight, UInt16 posX, UInt16 posY)
+        {
+            List<string> bakedFrames = new List<string>();
+            foreach (UInt32[] frame in frames)
+            {
+                UInt32 oldrgb = UInt32.MaxValue;
+                UInt16 blankCount = 0;
+                StringBuilder renderSTR = new StringBuilder(frameWidth * 2 * frameHeight + 100* frameHeight);
+                for (UInt16 ypos = 0; ypos < frameHeight; ypos++)
+                {
+
+                    renderSTR.Append($"\x1b[{posY + 1 + ypos};{posX + 1}H");
+
+                    for (UInt16 xpos = 0; xpos < frameWidth; xpos++)
+                    {
+                        UInt32 rgb = frame[xpos + ypos * frameWidth];
+                        if (rgb == oldrgb)
+                        {
+                            blankCount += 1;
+                        }
+                        else
+                        {
+                            if (blankCount > 0)
+                            {
+                                //lineSTR += new string(' ', blankCount * 2);
+                                renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                                blankCount = 0;
+                            }
+
+                            renderSTR.Append($"\x1b[48;2;{(byte)(rgb >> 8)};{(byte)(rgb >> 16)};{(byte)(rgb >> 24)}m  ");
+                        }
+                        oldrgb = rgb;
+                    }
+                    if (blankCount > 0)
+                    {
+                        //lineSTR += new string(' ', blankCount * 2);
+                        renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                        blankCount = 0;
+                    }
+                }
+                renderSTR.Append($"\x1b[{_Height + 1};0H");
+                bakedFrames.Add(renderSTR.ToString());
+            }
+            return bakedFrames;
+        }
+        
+        public void RenderFixedBakedFrame(string baked_frame)
+        {
+            uint charsWritten = 0;
+            nint reserved = 0;
+            WriteConsole(Hwindow, baked_frame, (uint)baked_frame.Length, out charsWritten, reserved);
         }
     }
 }
