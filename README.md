@@ -1,6 +1,6 @@
 # THIS IS DREADFULLY INCOMPLETE
 
-# example stress test of grphics system using bad apple
+# example stress test of graphics system using bad apple
 https://youtu.be/X7QiqgbAXoI
 
 # this code is very messy and half baked
