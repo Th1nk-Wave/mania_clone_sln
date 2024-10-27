@@ -35,6 +35,7 @@ namespace mania_clone
             int lastFrame = 0;
             while (true)
             {
+                
                 endTime = DateTime.UtcNow;
                 Double elapsedMillisecs = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
 
@@ -53,6 +54,7 @@ namespace mania_clone
                     w.RenderFixedBakedFrame(baked[newFrame]);
                     lastFrame = newFrame;
                 }
+                
                 
 
             }
