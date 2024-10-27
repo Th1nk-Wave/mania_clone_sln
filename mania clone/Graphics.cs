@@ -105,6 +105,8 @@ namespace Graphics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetPixel(UInt16 x, UInt16 y, Color col)
         {
+            if (x < 0 || y < 0) { return; }
+            if (x > _Width || y > _Height) { return; }
             ColorBuffer[x + y*_Width] = col.ToUint32();
             LineUpdates[y] = true;
         }
@@ -125,6 +127,18 @@ namespace Graphics
             Populate(LineUpdates, true);
         }
 
+        public void FillWithAt(UInt32[] frame, UInt16 X, UInt16 Y, UInt16 Width, UInt16 Height)
+        {
+            for (UInt16 y = 0; y < Height; y++)
+            {
+                for (UInt16 x = 0; x < Width; x++)
+                {
+                    ColorBuffer[(x+X) + (y+Y) * _Width] = frame[x + y*Width];
+                }
+                LineUpdates[y] = true;
+            }
+        }
+
         public void Box(UInt16 X1, UInt16 Y1, UInt16 X2, UInt16 Y2, Color col)
         {
             short StepX; if (X2 > X1) { StepX = 1; } else { StepX = -1; }
@@ -135,12 +149,38 @@ namespace Graphics
                 if (Y > _Height || Y < 0) { continue; }
                 for (short X = (short)X1; X != X2; X+=StepX)
                 {
-                    if (X > _Height || X < 0) { continue; }
+                    if (X > _Width || X < 0) { continue; }
                     ColorBuffer[X + Y * _Width] = colUInt32;
                 }
                 LineUpdates[Y] = true;
             }
         }
+
+        public void VerticalLine(UInt16 X, UInt16 Y, UInt16 Length, Color col)
+        {
+            if (X > _Width || X < 0) { return; }
+            UInt32 colUInt32 = col.ToUint32();
+            for (UInt16 ypos = Y; ypos < Y+Length; ypos++)
+            {
+                if (ypos > _Height || ypos < 0) { continue;}
+                ColorBuffer[X + ypos * _Width] = colUInt32;
+                LineUpdates[ypos] = true;
+            }
+        }
+
+        public void HorizontalLine(UInt16 X, UInt16 Y, UInt16 Length, Color col)
+        {
+            if (Y > _Height || Y < 0) { return; }
+            UInt32 colUInt32 = col.ToUint32();
+            LineUpdates[Y] = true;
+            for (UInt16 xpos = X; xpos < X + Length; xpos++)
+            {
+                if (xpos > _Width || xpos < 0) { continue; }
+                ColorBuffer[xpos + Y * _Width] = colUInt32;
+            }
+        }
+
+
 
         public void ProcessGUI(GUI gui)
         {
@@ -371,7 +411,48 @@ namespace Graphics
                         {
                             if (blankCount > 0)
                             {
-                                //lineSTR += new string(' ', blankCount * 2);
+                                renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                                blankCount = 0;
+                            }
+
+                            renderSTR.Append($"\x1b[48;2;{(byte)(rgb >> 8)};{(byte)(rgb >> 16)};{(byte)(rgb >> 24)}m  ");
+                        }
+                        oldrgb = rgb;
+                    }
+                    if (blankCount > 0)
+                    { 
+                        renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                        blankCount = 0;
+                    }
+                }
+                renderSTR.Append($"\x1b[{_Height + 1};0H");
+                bakedFrames.Add(renderSTR.ToString());
+            }
+            return bakedFrames;
+        }
+
+        public static List<string[]> BakeFramesDynamic(List<UInt32[]> frames, UInt16 frameWidth, UInt16 frameHeight)
+        {
+            List<string[]> bakedFrames = new List<string[]>();
+            foreach (UInt32[] frame in frames)
+            {
+                string[] bakedFrame = new string[frameHeight];
+                UInt32 oldrgb = UInt32.MaxValue;
+                UInt16 blankCount = 0;
+                for (UInt16 ypos = 0; ypos < frameHeight; ypos++)
+                {
+                    StringBuilder renderSTR = new StringBuilder(frameWidth * 2 * frameHeight + 100 * frameHeight);
+                    for (UInt16 xpos = 0; xpos < frameWidth; xpos++)
+                    {
+                        UInt32 rgb = frame[xpos + ypos * frameWidth];
+                        if (rgb == oldrgb)
+                        {
+                            blankCount += 1;
+                        }
+                        else
+                        {
+                            if (blankCount > 0)
+                            {
                                 renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
                                 blankCount = 0;
                             }
@@ -382,17 +463,53 @@ namespace Graphics
                     }
                     if (blankCount > 0)
                     {
-                        //lineSTR += new string(' ', blankCount * 2);
                         renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
                         blankCount = 0;
                     }
+                    bakedFrame[ypos] = renderSTR.ToString();
                 }
-                renderSTR.Append($"\x1b[{_Height + 1};0H");
-                bakedFrames.Add(renderSTR.ToString());
+                bakedFrames.Add(bakedFrame);
             }
             return bakedFrames;
         }
-        
+
+        public static List<string> BakeFrameDynamic(UInt32[] frame, UInt16 frameWidth, UInt16 frameHeight)
+        {
+            List<string> bakedFrame = new List<string>();
+            UInt32 oldrgb = UInt32.MaxValue;
+            UInt16 blankCount = 0;
+            for (UInt16 ypos = 0; ypos < frameHeight; ypos++)
+            {
+                StringBuilder renderSTR = new StringBuilder(frameWidth * 2 * frameHeight + 100 * frameHeight);
+                for (UInt16 xpos = 0; xpos < frameWidth; xpos++)
+                {
+                    UInt32 rgb = frame[xpos + ypos * frameWidth];
+                    if (rgb == oldrgb)
+                    {
+                        blankCount += 1;
+                    }
+                    else
+                    {
+                        if (blankCount > 0)
+                        {
+                            renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                            blankCount = 0;
+                        }
+
+                        renderSTR.Append($"\x1b[48;2;{(byte)(rgb >> 8)};{(byte)(rgb >> 16)};{(byte)(rgb >> 24)}m  ");
+                    }
+                    oldrgb = rgb;
+                }
+                if (blankCount > 0)
+                {
+                    renderSTR.Append(new StringBuilder("  ".Length * blankCount).Insert(0, "  ", blankCount));
+                    blankCount = 0;
+                }
+                bakedFrame[ypos] = renderSTR.ToString();
+            }
+            return bakedFrame;
+        }
+
         public void RenderFixedBakedFrame(string baked_frame)
         {
             uint charsWritten = 0;

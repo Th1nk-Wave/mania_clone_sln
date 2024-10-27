@@ -23,12 +23,26 @@ namespace mania_clone
             ushort res = 30;
             Window w = new Window((ushort)(8 * res), (ushort)(6*res),2);
 
+            //w.Box((ushort)(8 * res-6), (ushort)(6 * res-6), (ushort)(8 * res), (ushort)(6 * res), new Color(255, 0, 0));
+
+            Border greenBD = new Border(new Color(0, 255, 0));
+            Background WhiteBG = new Background(new Color(255,255,255));
+            Frame box1 = new Frame(new UIdim(0, 0f, 0, 0f), new UIdim(5,0f,5,0f), new UIdim(0,0f,0,0f),101);
+            box1.Append(WhiteBG);
+
+            Frame box2 = new Frame(new UIdim(0, 1f, 0, 1f), new UIdim(5, 0f, 5, 0f), new UIdim(0, 1f, 0, 1f), 102);
+            box2.Append(WhiteBG);
+
             Background redBG = new Background(new Color(255,0,0));
-            Frame box = new Frame(new UIdim(0, 0.5f, 0, 0.5f), new UIdim(5, 0f, 5, 0f), new UIdim(0, 0.5f, 0, 0.5f), 100);
+            
+            Frame box = new Frame(new UIdim(0, 0.5f, 0, 0.5f), new UIdim(5, 0f, 5, 0f), new UIdim(0, 0.5f, 0, 0.5f), 100); 
             box.Append(redBG);
+            box.Append(greenBD);
 
             GUI hud = new GUI(w.Width, w.Height);
             hud.Append(box);
+            hud.Append(box1);
+            hud.Append(box2);
 
             w.ProcessGUI(hud);
             w.Update_optimise2();
@@ -36,7 +50,7 @@ namespace mania_clone
 
 
 
-
+            return 0;
 
 
 

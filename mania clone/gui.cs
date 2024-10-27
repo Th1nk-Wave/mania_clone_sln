@@ -247,7 +247,7 @@ namespace Graphics
         public override void Draw(Window w, UIdim AbsolutePosition, UIdim AbsoluteSize, UIdim Anchor)
         {
             UIdim TopLeftCorner = AbsolutePosition - Anchor;
-            UIdim BottemRightCorner = TopLeftCorner + AbsoluteSize - new UIdim(1, 1, 0f, 0f);
+            UIdim BottemRightCorner = TopLeftCorner + AbsoluteSize;
             ApplyBefforeModifications(w, TopLeftCorner, BottemRightCorner);
         }
     }
@@ -273,6 +273,121 @@ namespace Graphics
             
         }
     }
+
+    public class Border : FrameModification
+    {
+        public Color BorderColor;
+        public Border(Color BorderColor)
+        {
+            this.BorderColor = BorderColor;
+        }
+        public override void Beffore(Window w, in GuiElement element, UIdim TopLeftCorner, UIdim BottemRightCorner)
+        {
+            w.VerticalLine((ushort)(TopLeftCorner.pixelX - 1), (ushort)(TopLeftCorner.pixelY - 1), (ushort)((BottemRightCorner - TopLeftCorner).pixelY + 1), BorderColor);
+            w.VerticalLine((ushort)(BottemRightCorner.pixelX),(ushort)(TopLeftCorner.pixelY-1),(ushort)((BottemRightCorner-TopLeftCorner).pixelY+1),BorderColor);
+            w.HorizontalLine((ushort)(TopLeftCorner.pixelX - 1), (ushort)(TopLeftCorner.pixelY - 1), (ushort)((BottemRightCorner - TopLeftCorner).pixelY + 1), BorderColor);
+            w.HorizontalLine((ushort)(TopLeftCorner.pixelX - 1), (ushort)(BottemRightCorner.pixelY), (ushort)((BottemRightCorner - TopLeftCorner).pixelY + 2), BorderColor);
+        }
+        public override void After(Window w, in GuiElement element, UIdim TopLeftCorner, UIdim BottemRightCorner)
+        {
+
+        }
+    }
+
+    public class Image : GuiElement
+    {
+        List<FrameModification> modifications;
+        private List<string> BakedFrame;
+        public UIdim ImageSize;
+        public UIdim ImageRealSize;
+        public UInt32[] ImageData;
+        public UInt32[] ImageDataScaled;
+        public UInt32[] ImageDataPerFrame;
+
+        private protected override void ApplyBefforeModifications(Window w, UIdim TopLeftCorner, UIdim BottemRightCorner)
+        {
+            if (modifications == null) { return; }
+            foreach (FrameModification modification in modifications)
+            {
+                if (modification is ImageModification) { continue; }
+                modification.Beffore(w, this, TopLeftCorner, BottemRightCorner);
+            }
+        }
+        private protected override void ApplyAfterModifications(Window w, UIdim TopLeftCorner, UIdim BottemRightCorner)
+        {
+            if (modifications == null) { return; }
+            foreach (FrameModification modification in modifications)
+            {
+                if (modification is ImageModification) { continue; }
+                modification.After(w, this, TopLeftCorner, BottemRightCorner);
+            }
+        }
+
+        public Image(UIdim position, UIdim size, UIdim anchor, int ZIndex, UIdim ImageSize, UInt32[] ImageData, UIdim ImageRealSize, List<GuiElement> children = null, List<FrameModification> modifications = null)
+            : base(position, size, anchor, ZIndex,children) // implements default constructor behaviour
+        {
+            this.ImageData = ImageData;
+            this.ImageRealSize = ImageRealSize;
+            this.ImageSize = ImageSize;
+            GenerateScaledImage();
+
+            // extra constructor behaviour if needed
+            if (modifications == null) { this.modifications = new List<FrameModification>(); } else { this.modifications = modifications; }
+        }
+        public override void Draw(Window w, UIdim AbsolutePosition, UIdim AbsoluteSize, UIdim Anchor)
+        {
+            UIdim TopLeftCorner = AbsolutePosition - Anchor;
+            UIdim BottemRightCorner = TopLeftCorner + AbsoluteSize;
+            UIdim scale = (AbsoluteSize / ImageSize);
+            float scaleAmount = (scale.pixelX + scale.pixelY) / 2;
+
+            UIdim scaledImageSize = new UIdim((int)(ImageSize.pixelX * scaleAmount), (int)(ImageSize.pixelY * scaleAmount),0f,0f);
+
+            GeneratePerFrameImage(scaledImageSize);
+
+            w.FillWithAt(ImageDataPerFrame, (ushort)TopLeftCorner.pixelX,(ushort)TopLeftCorner.pixelY, (ushort)scaledImageSize.pixelX, (ushort)scaledImageSize.pixelY);
+
+
+        }
+
+        public void GenerateScaledImage()
+        {
+            for (UInt16 X = 0; X < (ushort)ImageSize.pixelX;  X++)
+            {
+                for (UInt16 Y = 0; Y < (ushort)ImageSize.pixelY; Y++)
+                {
+                    UInt16 ScaledX = (ushort)((X/ImageSize.pixelX) * ImageRealSize.pixelX);
+                    UInt16 ScaledY = (ushort)((Y/ImageSize.pixelY) * ImageRealSize.pixelY);
+                    UInt32 rgb = ImageData[ScaledX + ScaledY * ImageRealSize.pixelY];
+                    ImageDataScaled[X + Y * ImageSize.pixelY] = rgb;
+                }
+            }
+        }
+
+        public void GeneratePerFrameImage(UIdim scaledImageSize)
+        {
+            for (UInt16 X = 0; X < (ushort)scaledImageSize.pixelX; X++)
+            {
+                for (UInt16 Y = 0; Y < (ushort)scaledImageSize.pixelY; Y++)
+                {
+                    UInt16 ScaledX = (ushort)((X / scaledImageSize.pixelX) * ImageSize.pixelX);
+                    UInt16 ScaledY = (ushort)((Y / scaledImageSize.pixelY) * ImageSize.pixelY);
+                    UInt32 rgb = ImageData[ScaledX + ScaledY * ImageSize.pixelY];
+                    ImageDataPerFrame[X + Y * scaledImageSize.pixelY] = rgb;
+                }
+            }
+        }
+        public void BakeImage()
+        {
+            BakedFrame = Window.BakeFrameDynamic(ImageDataScaled, (ushort)ImageSize.pixelX, (ushort)ImageSize.pixelY);
+        }
+    }
+
+    public abstract class ImageModification : FrameModification
+    {
+        public abstract override void Beffore(Window w, in GuiElement element, UIdim TopLeftCorner, UIdim BottemRightCorner);
+    }
+
 
     public class GUI
     {
