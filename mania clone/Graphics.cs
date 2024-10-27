@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 using static ConsoleAPI.ConsoleAPI;
 using static Utility.Utils;
+using Graphics;
 
 namespace Graphics
 {
@@ -99,6 +102,7 @@ namespace Graphics
 
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetPixel(UInt16 x, UInt16 y, Color col)
         {
             ColorBuffer[x + y*_Width] = col.ToUint32();
@@ -119,6 +123,28 @@ namespace Graphics
         {
             frame.CopyTo(ColorBuffer,0);
             Populate(LineUpdates, true);
+        }
+
+        public void Box(UInt16 X1, UInt16 Y1, UInt16 X2, UInt16 Y2, Color col)
+        {
+            short StepX; if (X2 > X1) { StepX = 1; } else { StepX = -1; }
+            short StepY; if (Y2 > Y1) { StepY = 1; } else { StepY = -1; }
+            UInt32 colUInt32 = col.ToUint32();
+            for (short Y = (short)Y1; Y != Y2; Y+=StepY)
+            {
+                if (Y > _Height || Y < 0) { continue; }
+                for (short X = (short)X1; X != X2; X+=StepX)
+                {
+                    if (X > _Height || X < 0) { continue; }
+                    ColorBuffer[X + Y * _Width] = colUInt32;
+                }
+                LineUpdates[Y] = true;
+            }
+        }
+
+        public void ProcessGUI(GUI gui)
+        {
+            gui.DecendTreeAndPlot(this);
         }
 
         public void Update()
@@ -308,6 +334,7 @@ namespace Graphics
 
             StringBuilder renderSTR = new StringBuilder(UpdateComplexity + renderer_FinalSuffixEscapeSequenceOffset);
             UpdateComplexity = 0;
+            if (UpdateStack.Count <= 0) { return; }
             do
             {
                 UInt16 updateRow = UpdateStack.Pop();

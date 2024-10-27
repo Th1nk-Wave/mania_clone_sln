@@ -5,7 +5,6 @@ using System.Text;
 using static ConsoleAPI.ConsoleAPI;
 using Graphics;
 using static mania_clone.fileDecoder;
-using System.Diagnostics;
 
 
 
@@ -23,6 +22,24 @@ namespace mania_clone
             int totalFrames = 6570;
             ushort res = 30;
             Window w = new Window((ushort)(8 * res), (ushort)(6*res),2);
+
+            Background redBG = new Background(new Color(255,0,0));
+            Frame box = new Frame(new UIdim(0, 0.5f, 0, 0.5f), new UIdim(5, 0f, 5, 0f), new UIdim(0, 0.5f, 0, 0.5f), 100);
+            box.Append(redBG);
+
+            GUI hud = new GUI(w.Width, w.Height);
+            hud.Append(box);
+
+            w.ProcessGUI(hud);
+            w.Update_optimise2();
+            w.Render_optimise();
+
+
+
+
+
+
+
 
             List<UInt32[]> frames = UnpackFrames("D:/stuff thats in better drive/programming/c# programming/mania_clone_sln/mania clone/assets/frameDataCompressed.txt", (ushort)(8 * res), (ushort)(6 * res));
             List<string> baked = w.BakeFramesFixed(frames, (ushort)(8 * res), (ushort)(6 * res),0,0);
